@@ -1,0 +1,4 @@
+Folder 1|First folder
+Folder 2|First folder
+imgs|Any images
+
