@@ -21,6 +21,7 @@ $AdminIp = "Put-Your-IP-Address-Here";
 //172.20.       //Subnet 172.20.*.*
 //172.20.0.     //Subnet 172.20.0.*
 //20.0          //Any IP-Address that contains "20.0"
+$AdminIPs = ["Put-Your-IP-Address-Here", "And-Here"];
 
 //Note: You cloud replace IP-address based check with more secure thing than this. (for example)
 
@@ -30,5 +31,4 @@ $FSCharset = "utf-8";
 //Relative path to the gallery page background image
 $ImgBackground = "/gallery/_img/docs.jpg";
 
-?>
 
