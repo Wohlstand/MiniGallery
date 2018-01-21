@@ -125,7 +125,7 @@ if((isset($_GET['sorttype']))&&(isAdminIP()))
 	header("location: ."); die();
 }
 
-if((isset($_GET['comment']))&&(isAdminIP()))
+if(isset($_GET['comment']) && isAdminIP())
 {
 	if(file_exists("_gallyry.db"))
 	$db = sqlite_open("_gallyry.db");
@@ -145,7 +145,7 @@ if((isset($_GET['comment']))&&(isAdminIP()))
 }
 
 //Full clean-up of cache by request
-if(isset($_GET['clean_thumbs']))
+if(isset($_GET['clean_thumbs']) && isAdminIP())
 {
 	$files = glob('_Thumbs/*'); // get all file names
 	foreach($files as $file)
@@ -948,7 +948,11 @@ if(!file_exists($thumbs[$i]))
 ?>
 <div style="text-align: center">
 				<em><span style="font-size: xx-large"><?php echo ( ($_SERVER['REQUEST_URI']==$Photosfolder) ? $PageTitle : urldecode(basename($_SERVER['REQUEST_URI'])));?></span><br/>
-				<?php if(isAdminIP()){ echo "<small>[".LANG_ADMIN_RIGHTS."]</small><br/>";?>
+				<?php
+				if(isAdminIP())
+				{
+					echo "<small>[".LANG_ADMIN_RIGHTS."]</small><br/>";
+				?>
 				<?=LANG_SORT_BY?>: <a href="?sorttype=1&value1=date&value2=asc"><?=LANG_SB_DATE?></a>
 				(<a href="?sorttype=1&value1=date&value2=desc"><?=LANG_SB_DESC?></a>)
 				<a href="?sorttype=1&value1=name&value2=asc"><?=LANG_SB_NAME?></a>
@@ -956,8 +960,9 @@ if(!file_exists($thumbs[$i]))
 				<br/>
 				<?php }?>
 				<span style="font-size: small"><a href="../"><span style="color: #000080"><img src="/sysimage/icons/UPALEVEL.GIF" border="0"><?=LANG_PARENT_DIR?></span></a></span></em>
-				&nbsp;&nbsp;&nbsp;
+				<?php if(isAdminIP()) { ?>&nbsp;&nbsp;&nbsp;
 				<span style="font-size: small"><a href="?clean_thumbs"><span style="color: #000080"><img src="/sysimage/icons/refresh.gif" border="0"><?=LANG_REFRESH_THUMBS?></span></a></span></em>
+				<?php }?>
 <div style="width:100%;display: block;float:left;margin: 25;">
 <?php
 for($i=0; $i<count($folders);$i++)
