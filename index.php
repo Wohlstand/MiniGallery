@@ -962,8 +962,11 @@ if(!file_exists($thumbs[$i]))
 <?php
 for($i=0; $i<count($folders);$i++)
 {
-	if(is_dir($folders[$i])=="true")
+	if(is_dir($folders[$i]) == "true")
 	{
+	    if(substr($folders[$i], 0, 1 ) === ".")
+            continue; //Don't show hidden files and directories
+
 		if(($folders[$i]!=".")&&($folders[$i]!="..")&&($folders[$i]!="_img")&&($folders[$i]!="js")&&($folders[$i]!="_Thumbs"))
 		{
 			if(!file_exists($folders[$i]."/index.php"))
@@ -993,16 +996,20 @@ for($i=0; $i<count($folders);$i++)
 }
 
 
-for($i=0; $i<count($files);$i++)
+for($i=0; $i < count($files);$i++)
 {
-
 	$showname = fs2utf($files[$i]);
-	if($filedescription!="none")
-	for($j=0; $j<count($filedescription); $j++)
+    if(substr($files[$i], 0, 1 ) === ".")
+        continue; //Don't show hidden files and directories
+
+	if($filedescription != "none")
 	{
-		$desc01 = explode("|", $filedescription[$j]);
-		if($files[$i]==$desc01[0])
-		$showname = iconv("Windows-1251","UTF-8", $desc01[1]);
+	    for($j=0; $j<count($filedescription); $j++)
+	    {
+		    $desc01 = explode("|", $filedescription[$j]);
+		    if($files[$i]==$desc01[0])
+		    $showname = iconv("Windows-1251","UTF-8", $desc01[1]);
+	    }
 	}
 
 	if(preg_match('/\.(jpg|jpeg|png|gif)$/i',$files[$i]))
@@ -1157,7 +1164,7 @@ else
 	<table style="text-align: center; width: 100%; vertical-align: middle; display: inline; ">
 	<tr><td style="padding-top: 150px">
 	<img src=<?php echo $Photosfolder."_img/magnifier.png";?>><br>
-	<span style="font-size: x-large">".LANG_FOLDER_EMPTY."</span>
+	<span style="font-size: x-large"><?=LANG_FOLDER_EMPTY?></span>
 	</td></tr>
 	</table>
 	</center>
