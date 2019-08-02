@@ -35,7 +35,10 @@
  * SOFTWARE.
  ***********************************************************************************/
 
-require_once("index.options.php");
+if(!file_exists(dirname(__FILE__) . "/index.options.php"))
+    die("CAN'T WORK WITHOUT 'index.options.php'! Please create it with using of example 'index.options.php.example' file!");
+
+require_once(dirname(__FILE__) . "/index.options.php");
 
 /****************************************************************/
 if(file_exists(dirname(__FILE__) . "/index.lang.php"))
@@ -61,7 +64,7 @@ else
     {
         $counter_one = $count % 10;//Units
         $counter_ten = $count % 100 - $count % 10;//Tens
-        $counter_hng = $counter_ten + $counter_one;//Summ of Tens and Units
+        // $counter_hng = $counter_ten + $counter_one;//Summ of Tens and Units
         echo "Totally " . $count . " element" . (($counter_one == 1) && (($counter_ten != 1) && ($counter_one != 1)) ? "" : "s");
     }
 }
@@ -181,7 +184,7 @@ function utf2fs($fname)
         return iconv("utf-8", $FSCharset, $fname);
 }
 
-function sqlite_open($location, $mode = 0)
+function sqlite_open($location)
 {
     $handle = new SQLite3($location);
     return $handle;
@@ -195,7 +198,7 @@ function sqlite_query($dbhandle, $query)
     return $result;
 }
 
-function sqlite_fetch_array(&$result, $type = 0)
+function sqlite_fetch_array(&$result)
 {
     #Get Columns
     $i = 0;
@@ -209,7 +212,7 @@ function sqlite_fetch_array(&$result, $type = 0)
     return $resx;
 }
 
-function renameform($filename, $AdminIp)
+function renameForm($filename)
 {
     if(isAdminIP())
     {
@@ -224,412 +227,7 @@ function renameform($filename, $AdminIp)
     else return "";
 }
 
-function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-
-    if(($width == 80) && ($size[0] < 80) && ($size[1] < 80))
-    {
-        $width = $size[0];
-    }
-
-    $height = ($width * $size[1]) / $size[0];
-
-    if(($width == 80) && ($height > 80))
-    {
-        $height = 80;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-
-    imagejpeg($idest, $dest, $quality);
-
-    imagedestroy($isrc);
-    imagedestroy($idest);
-
-    return true;
-
-}
-
-function img_resize_gif($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-
-    if(($width == 140) && ($size[0] <= 140) && ($size[1] <= 140))
-    {
-        $width = $size[0];
-    }
-
-    if(($width == 80) && ($size[0] <= 80) && ($size[1] <= 80))
-    {
-        $width = $size[0];
-        if(($size[0] <= 80) && ($size[1] <= 80))
-        {
-            $width = $size[0];
-            copy($src, $dest);
-            return true;
-        }
-    }
-
-    $height = ($width * $size[1]) / $size[0];
-
-
-    if(($width == 80) && ($height > 80))
-    {
-        $height = 80;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-
-    $isrc = $icfunc($src);
-    $idest = imagecreate($width, $height);
-
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagegif($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-
-    return true;
-
-}
-
-function img_resize_png($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-
-    $size = getimagesize($src);
-
-    if($size === false) return false;
-
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-
-    if(($width == 80) && ($size[0] < 140) && ($size[1] < 140))
-    {
-        $width = $size[0];
-    }
-
-    $height = ($width * $size[1]) / $size[0];
-
-    if(($width == 80) && ($height > 80))
-    {
-        $height = 80;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-
-    imagepng($idest, $dest);
-
-    imagedestroy($isrc);
-    imagedestroy($idest);
-
-    return true;
-
-}
-
-function img_resize_1280($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] < 1280) && ($size[1] < 1024))
-    {
-        $width = $size[0];
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 1024)
-    {
-        $height = 1024;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagejpeg($idest, $dest, $quality);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_1280_gif($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] < 1280) && ($size[1] < 1024))
-    {
-        $width = $size[0];
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 1024)
-    {
-        $height = 1024;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreate($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagegif($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_1280_png($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] < 1280) && ($size[1] < 1024))
-    {
-        $width = $size[0];
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 1024)
-    {
-        $height = 1024;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagepng($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_140($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] <= 140) && ($size[1] <= 140))
-    {
-        $width = $size[0];
-    }
-
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 140)
-    {
-        $height = 140;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagejpeg($idest, $dest, $quality);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_140_gif($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-
-    if(($size[0] <= 140) && ($size[1] <= 140))
-    {
-        $width = $size[0];
-        copy($src, $dest);
-        return true;
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 140)
-    {
-        $height = 140;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreate($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagegif($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_140_png($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] < 140) && ($size[1] < 140))
-    {
-        $width = $size[0];
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 140)
-    {
-        $height = 140;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagepng($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_100($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
+function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100, $target_height = 100)
 {
     if(!file_exists($src)) return false;
     $size = getimagesize($src);
@@ -645,9 +243,9 @@ function img_resize_100($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
     $height = ($width * $size[1]) / $size[0];
     $x_ratio = $width / $size[0];
     $y_ratio = $height / $size[1];
-    if($height > 100)
+    if($height > $target_height)
     {
-        $height = 100;
+        $height = $target_height;
         $width = ($height * $size[0]) / $size[1];
         $x_ratio = $width / $size[0];
         $y_ratio = $height / $size[1];
@@ -663,103 +261,17 @@ function img_resize_100($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
     imagefill($idest, 0, 0, $rgb);
     imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
         $new_width, $new_height, $size[0], $size[1]);
-    imagejpeg($idest, $dest, $quality);
+
+    if(preg_match('/\.(jpg|jpeg)$/i', $dest))
+        imagejpeg($idest, $dest, $quality);
+    else if(preg_match('/\.(gif)$/i', $dest))
+        imagegif($idest, $dest);
+    else
+        imagepng($idest, $dest);
+
     imagedestroy($isrc);
     imagedestroy($idest);
     return true;
-}
-
-function img_resize_100_gif($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
-
-    if(($size[0] <= 100) && ($size[1] <= 100))
-    {
-        $width = $size[0];
-        copy($src, $dest);
-        return true;
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 100)
-    {
-        $height = 100;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
-    $idest = imagecreate($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagegif($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-function img_resize_100_png($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100)
-{
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(($size[0] > 3000) || ($size[1] > 3000))
-    {
-        copy(dirname(__FILE__) . "/_img/huge.png", $dest);
-        return false;
-    }
-    if(!function_exists($icfunc)) return false;
-    if(($size[0] < 100) && ($size[1] < 100))
-    {
-        $width = $size[0];
-    }
-    $height = ($width * $size[1]) / $size[0];
-    $x_ratio = $width / $size[0];
-    $y_ratio = $height / $size[1];
-    if($height > 100)
-    {
-        $height = 100;
-        $width = ($height * $size[0]) / $size[1];
-        $x_ratio = $width / $size[0];
-        $y_ratio = $height / $size[1];
-    }
-    $ratio = min($x_ratio, $y_ratio);
-    $use_x_ratio = ($x_ratio == $ratio);
-    $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
-    $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
-    $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
-    $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    //echo filesize($src);
-    $isrc = $icfunc($src);
-    $idest = imagecreatetruecolor($width, $height);
-    imagefill($idest, 0, 0, $rgb);
-    imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
-        $new_width, $new_height, $size[0], $size[1]);
-    imagepng($idest, $dest);
-    imagedestroy($isrc);
-    imagedestroy($idest);
-    return true;
-}
-
-
-
-function is_hidden_file($fn)
-{
 }
 
 if(!file_exists("_Thumbs"))
@@ -967,11 +479,11 @@ for($i = 0; $i < count($thumbs); $i++)
             (<a href="?sorttype=1&value1=name&value2=desc"><?= LANG_SB_DESC ?></a>)
             <br/>
         <?php } ?>
-        <span style="font-size: small"><a href="../"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/upalevel.gif" border="0"><?= LANG_PARENT_DIR ?></span></a></span></em>
-    <?php if(isAdminIP()) { ?>&nbsp;&nbsp;&nbsp;
-        <span style="font-size: small"><a href="?clean_thumbs"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/refresh.gif" border="0"><?= LANG_REFRESH_THUMBS ?></span></a></span></em>
+        <span style="font-size: small"><a href="../"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/upalevel.gif" style="border-width: 0"><?= LANG_PARENT_DIR ?></span></a></span></em>
+    <?php if(isAdminIP()) { ?>
+        <span style="font-size: small"><a href="?clean_thumbs"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/refresh.gif" style="border-width: 0"><?= LANG_REFRESH_THUMBS ?></span></a></span>
     <?php } ?>
-    <div style="width:100%;display: block;float:left;margin: 25;">
+    <div style="width:100%;display: block;float:left; margin: 25px;">
         <?php
         for($i = 0; $i < count($folders); $i++)
         {
@@ -1000,7 +512,7 @@ for($i = 0; $i < count($thumbs); $i++)
                         }
                     echo '<div style="float: left; width: 150px; height: 150px;">';
                     echo "<center><a href=\"" . fs2utf($folders[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($folders[$i]) . "\" src=\"" . $Photosfolder . "_img/folder.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($folders[$i]) . "\" src=\"" . $Photosfolder . "_img/folder.png" .
                         "\"></a><br><i><u><small>" . $showname . "</small></u></i></center>\n";
                     $counter++;
                     echo '</div>';
@@ -1031,19 +543,12 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     if(!file_exists("_Thumbs/" . $files[$i]))
-                    {
-                        if(preg_match('/\.(jpg|jpeg)$/i', $files[$i]))
-                            img_resize_100($files[$i], "_Thumbs/" . $files[$i], 100);
-                        if(preg_match('/\.(png)$/i', $files[$i]))
-                            img_resize_100_png($files[$i], "_Thumbs/" . $files[$i], 100);
-                        if(preg_match('/\.(gif)$/i', $files[$i]))
-                            img_resize_100_gif($files[$i], "_Thumbs/" . $files[$i], 100);
-                    }
+                        img_resize($files[$i], "_Thumbs/" . $files[$i], 100, 0xFFFFFF, 100, 100);
 
                     echo "<center><a class=\"fancybox\" rel=\"photoalboom\" title=\"" . preg_replace("/.png|.jpg|.gif|.jpeg/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-color:silver; background-color:silver\" border=1 alt=\"" . fs2utf($files[$i]) . "\" src=\"_Thumbs/" . fs2utf($files[$i]) . "?" . rand() .
+                        "\"><img style=\"border-color: silver; background-color: silver; border-width: 1px;\" alt=\"" . fs2utf($files[$i]) . "\" src=\"_Thumbs/" . fs2utf($files[$i]) . "?" . rand() .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.png|.jpg|.gif|.jpeg/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.png|.jpg|.gif|.jpeg/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1061,9 +566,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a class=\"textfile\" data-fancybox-type=\"iframe\" title=\"" . preg_replace("/.txt/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/text.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/text.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.txt/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.txt/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1076,9 +581,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a class=\"textfile\" title=\"" . preg_replace("/.swf/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/swf.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/swf.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.swf/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.swf/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1090,9 +595,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.zip/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/arch.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/arch.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.zip$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.zip$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1104,9 +609,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.ods/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/ods.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/ods.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.ods$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.ods$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1118,9 +623,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.xls/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xls.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xls.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xls$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xls$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1132,9 +637,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.xlsx/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xlsx.png" .
+                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xlsx.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1152,9 +657,9 @@ for($i = 0; $i < count($thumbs); $i++)
                 <div style="float: left; width: 150px; height: 150px;">
                     <?php
                     echo "<center><a target=\"_blank\" class=\"anyfile\" title=\"" . fs2utf($files[$i]) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img border=0 alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/anyfile.png" .
+                        "\"><img style=\"border-width: 0;\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/anyfile.png" .
                         "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameform(fs2utf($files[$i]), $AdminIp) . "</div>\n";
+                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
                     $counter++;
                     ?>
                 </div>
@@ -1175,16 +680,14 @@ if($counter > 0)
 else
 {
     ?>
-    <center>
-        <table style="text-align: center; width: 100%; vertical-align: middle; display: inline; ">
-            <tr>
-                <td style="padding-top: 150px">
-                    <img src=<?php echo $Photosfolder . "_img/magnifier.png"; ?>><br>
-                    <span style="font-size: x-large"><?= LANG_FOLDER_EMPTY ?></span>
-                </td>
-            </tr>
-        </table>
-    </center>
+    <table style="text-align: center; width: 100%; vertical-align: middle; display: inline; ">
+        <tr>
+            <td style="padding-top: 150px">
+                <img alt="Nothing found" src=<?php echo $Photosfolder . "_img/magnifier.png"; ?>/><br>
+                <span style="font-size: x-large"><?= LANG_FOLDER_EMPTY ?></span>
+            </td>
+        </tr>
+    </table>
     <?php
 } ?>
 
