@@ -1,6 +1,6 @@
 <?php
 /***********************************************************************************
- * MiniGallery v1.1
+ * MiniGallery v1.2
  *
  * Gallery is works based on alone (this) file which adds linked php-files into
  * sub-folders (which includes THIS file)
