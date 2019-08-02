@@ -1,4 +1,6 @@
 <?php
+define("LANG_HTML_LANG", "ru");
+
 define("LANG_RENAME", "Переименовать");
 define("LANG_RENAME_FILE", "Переименовать файл");
 define("LANG_DELETE", "Удалить");

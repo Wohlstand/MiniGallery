@@ -15,7 +15,7 @@
  * ====================================================================================
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 Vitaly Novichkov "Wohlstand" <admin@wohlnet.ru>
+ * Copyright (c) 2016-2019 Vitaly Novichkov "Wohlstand" <admin@wohlnet.ru>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,8 @@ if(file_exists(dirname(__FILE__) . "/index.lang.php"))
     require_once(dirname(__FILE__) . "/index.lang.php");
 else
 {
+    define("LANG_HTML_LANG", "en");
+
     define("LANG_RENAME", "Rename");
     define("LANG_RENAME_FILE", "Rename file");
     define("LANG_DELETE", "Delete");
@@ -337,7 +339,7 @@ if(($db_is_support))
 }
 
 ?><!DOCTYPE html>
-<html>
+<html lang="<?=LANG_HTML_LANG?>">
 <head>
     <style>
         body {
@@ -479,9 +481,9 @@ for($i = 0; $i < count($thumbs); $i++)
             (<a href="?sorttype=1&value1=name&value2=desc"><?= LANG_SB_DESC ?></a>)
             <br/>
         <?php } ?>
-        <span style="font-size: small"><a href="../"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/upalevel.gif" style="border-width: 0"><?= LANG_PARENT_DIR ?></span></a></span></em>
+        <span style="font-size: small"><a href="../"><span style="color: #000080"><img alt="Up" src="<?=$Photosfolder?>_img/upalevel.gif" style="border-width: 0"><?= LANG_PARENT_DIR ?></span></a></span></em>
     <?php if(isAdminIP()) { ?>
-        <span style="font-size: small"><a href="?clean_thumbs"><span style="color: #000080"><img src="<?=$Photosfolder?>_img/refresh.gif" style="border-width: 0"><?= LANG_REFRESH_THUMBS ?></span></a></span>
+        <span style="font-size: small"><a href="?clean_thumbs"><span style="color: #000080"><img alt="Refresh" src="<?=$Photosfolder?>_img/refresh.gif" style="border-width: 0"><?= LANG_REFRESH_THUMBS ?></span></a></span>
     <?php } ?>
     <div style="width:100%;display: block;float:left; margin: 25px;">
         <?php
