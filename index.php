@@ -3,11 +3,11 @@
  * MiniGallery v1.1
  *
  * Gallery is works based on alone (this) file which adds linked php-files into
- * subfolders (which includes THIS file)
+ * sub-folders (which includes THIS file)
  *
  * This gallery uses the FancyBox java-scripts to allow interactive preview of the images.
  *
- * To define order and it's direction use a _sortby.txt file
+ * To define order and it's direction use a `_sortby.txt` file
  * To show another title instead filename of specific file, use the "_desc.txt" file.
  *
  * Required extension: PDO-SQLite
@@ -214,17 +214,13 @@ function sqlite_fetch_array(SQLite3Result &$result)
 
 function renameForm($filename)
 {
-    if(isAdminIP())
-    {
-        return "<form method=\"get\" action=\".\">\n " . LANG_RENAME_FILE . "<br><input name=\"old\" type=\"hidden\" value=\"" .
+    return "<form method=\"get\" action=\".\">\n " . LANG_RENAME_FILE . "<br><input name=\"old\" type=\"hidden\" value=\"" .
             $filename . "\" />\n<input name=\"new\" type=\"text\" style=\"width: 304px; height: 22px\" value=\"" .
             $filename . "\" />\n<br>\n<input name=\"Button1\" type=\"submit\" value=\"" . LANG_RENAME . "\" style=\"height: 18px; width: 105px\">\n</form>" .
             "<br><form method=\"get\">" .
             "<input name=\"delfile\" type=\"hidden\" value=\"" . $filename . "\" />" .
             "<input type=\"submit\" value=\"" . LANG_DELETE . "\" style=\"height: 18px; width: 105px\">" .
             "</form>";
-    }
-    else return "";
 }
 
 function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100, $target_height = 100)
@@ -465,6 +461,54 @@ for($i = 0; $i < count($thumbs); $i++)
 }
 //Clean-up old thumbnails End
 
+function drawEntry($oneFile, $showName, $iconName = null, $class = 'file')
+{
+    global $Photosfolder;
+    $oneFileClean = preg_replace('/\\.[^.\\s]{1,7}$/', "", fs2utf($oneFile));
+    echo "\n";
+    echo "    <div style=\"float: left; width: 150px; height: 150px; text-align: center;\">\n";
+
+    if($class === 'directory')
+    {
+        echo "    <span style=\"margin-left: auto; margin-right: auto;\">\n";
+        echo "        <a href=\"" . fs2utf($oneFile) . "\">\n";
+        echo "            <img style=\"border-width: 0\" alt=\"" . fs2utf($oneFile) . "\" src=\"" . $Photosfolder . "_img/folder.png" . "\">\n";
+        echo "        </a><br><i><u><small>" . $showName . "</small></u></i></span>\n";
+        echo "    </div>\n\n";
+        return;
+    }
+
+    echo "        <span style=\"margin-left: auto; margin-right: auto;\">\n";
+
+    if($class === 'image')
+        $aSetup = "class=\"fancybox\" rel=\"photoalboom\"";
+    else if($class === 'text')
+        $aSetup = "class=\"textfile\" data-fancybox-type=\"iframe\"";
+    else if($class === 'archive')
+        $aSetup = "class=\"textfile\" data-fancybox-type=\"iframe\"";
+    else
+        $aSetup = "target=\"_blank\" class=\"anyfile\"";
+
+    echo "             <a " . $aSetup . " title=\"" . $oneFileClean . "\" " .
+                        "href=\"" . fs2utf($oneFile) . "\">\n";
+    echo "                 <img style=\"border-width: 0\" " .
+                            "alt=\"" . fs2utf($oneFile) . "\" ";
+
+    if($iconName)
+        echo "src=\"" . $Photosfolder . "_img/" . $iconName . "\">\n";
+    else
+        echo "src=\"_Thumbs/" . fs2utf($oneFile) . "?" . rand()  . "\">\n";
+    echo "             </a><br><i><u><small>" . $showName . "</small></u></i>\n";
+    echo "         </span>\n";
+
+    echo "         <div id=\"" . $oneFileClean . "_desc\" style=\"display: none;\">\n";
+    if(isAdminIP())
+        echo renameForm(fs2utf($oneFile)) . "\n";
+    echo "         </div>\n";
+
+    echo "    </div>\n";
+}
+
 ?>
 <div style="text-align: center">
     <em><span style="font-size: xx-large"><?php echo(($_SERVER['REQUEST_URI'] == $Photosfolder) ? $PageTitle : urldecode(basename($_SERVER['REQUEST_URI']))); ?></span><br/>
@@ -504,18 +548,17 @@ for($i = 0; $i < count($thumbs); $i++)
 
                     $showname = fs2utf($folders[$i]);
                     if($filedescription != "none")
+                    {
                         for($j = 0; $j < count($filedescription); $j++)
                         {
                             $desc01 = explode("|", $filedescription[$j]);
                             if($folders[$i] == $desc01[0])
                                 $showname = iconv("Windows-1251", "UTF-8", $desc01[1]);
                         }
-                    echo '<div style="float: left; width: 150px; height: 150px;">';
-                    echo "<center><a href=\"" . fs2utf($folders[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($folders[$i]) . "\" src=\"" . $Photosfolder . "_img/folder.png" .
-                        "\"></a><br><i><u><small>" . $showname . "</small></u></i></center>\n";
+                    }
+
+                    drawEntry($folders[$i], $showname, "folder.png", 'directory');
                     $counter++;
-                    echo '</div>';
                 }
             }
         }
@@ -539,111 +582,43 @@ for($i = 0; $i < count($thumbs); $i++)
 
             if(preg_match('/\.(jpg|jpeg|png|gif)$/i', $files[$i]))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    if(!file_exists("_Thumbs/" . $files[$i]))
-                        img_resize($files[$i], "_Thumbs/" . $files[$i], 100, 0xFFFFFF, 100, 100);
+                if(!file_exists("_Thumbs/" . $files[$i]))
+                    img_resize($files[$i], "_Thumbs/" . $files[$i], 100, 0xFFFFFF, 100, 100);
 
-                    echo "<center><a class=\"fancybox\" rel=\"photoalboom\" title=\"" . preg_replace("/.png|.jpg|.gif|.jpeg/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-color: silver; background-color: silver; border-width: 1px;\" alt=\"" . fs2utf($files[$i]) . "\" src=\"_Thumbs/" . fs2utf($files[$i]) . "?" . rand() .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.png|.jpg|.gif|.jpeg/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, null, 'image');
+                $counter++;
             }
-            //else if(((strstr($files[$i], ".txt"))||(strstr($files[$i], ".TXT")))
-            else if(preg_match('/\.(cpp|txt)$/i', $files[$i])
-                &&
-                ($files[$i] != "_desc.txt")
-                &&
-                ($files[$i] != "_sortby.txt")
+            else if(preg_match('/\.(c|cpp|h|hpp|txt)$/i', $files[$i])
+                && ($files[$i] != "_desc.txt") && ($files[$i] != "_sortby.txt")
             )
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a class=\"textfile\" data-fancybox-type=\"iframe\" title=\"" . preg_replace("/.txt/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/text.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.txt/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "text.png", 'text');
+                $counter++;
             }
-            else if(preg_match('/\.(swf)$/i', $files[$i])
-            )
+            else if(preg_match('/\.(swf)$/i', $files[$i]))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a class=\"textfile\" title=\"" . preg_replace("/.swf/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/swf.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.swf/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "swf.png", 'text');
+                $counter++;
             }
             else if((preg_match('/\.(zip)$/i', $files[$i])) || (preg_match('/\.(7z)$/i', $files[$i])))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.zip/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/arch.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.zip$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "arch.png", 'archive');
+                $counter++;
             }
             else if(preg_match('/\.(ods)$/i', $files[$i]))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.ods/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/ods.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.ods$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "ods.png", 'archive');
+                $counter++;
             }
             else if(preg_match('/\.(xls)$/i', $files[$i]))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.xls/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xls.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xls$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "xls.png", 'archive');
+                $counter++;
             }
             else if(preg_match('/\.(xlsx)$/i', $files[$i]))
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a target=\"_blank\" class=\"archive\" title=\"" . preg_replace("/.xlsx/i", "", fs2utf($files[$i])) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/xlsx.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "xlsx.png", 'archive');
+                $counter++;
             }
             else if(
                 (!is_dir($files[$i])) &&
@@ -653,17 +628,8 @@ for($i = 0; $i < count($thumbs); $i++)
                 ($files[$i] != "_desc.txt")
             )
             {
-                ?>
-                <div style="float: left; width: 150px; height: 150px;">
-                    <?php
-                    echo "<center><a target=\"_blank\" class=\"anyfile\" title=\"" . fs2utf($files[$i]) . "\" href=\"" . fs2utf($files[$i]) .
-                        "\"><img style=\"border-width: 0;\" alt=\"" . fs2utf($files[$i]) . "\" src=\"" . $Photosfolder . "_img/anyfile.png" .
-                        "\"></a><br><i><u><small>" . $showname .
-                        "</small></u></i></center>\n<div id=\"" . preg_replace("/.xlsx$/i", "", fs2utf($files[$i])) . "_desc\" style=\"display: none;\">" . renameForm(fs2utf($files[$i])) . "</div>\n";
-                    $counter++;
-                    ?>
-                </div>
-                <?php
+                drawEntry($files[$i], $showname, "anyfile.png", 'anyfile');
+                $counter++;
             }
 
         }
@@ -675,7 +641,7 @@ for($i = 0; $i < count($thumbs); $i++)
 if($counter > 0)
 {
     //Print number of listed elements with support of right Russian grammar of the "element(s)" word
-    echo "<p><br>" . totalElementsLabel($counter) . "</p>";
+    echo "    <p><br>" . totalElementsLabel($counter) . "</p>\n";
 }
 else
 {
