@@ -192,7 +192,7 @@ function sqlite_open($location)
     return $handle;
 }
 
-function sqlite_query($dbhandle, $query)
+function sqlite_query(SQLite3 $dbhandle, $query)
 {
     $array['dbhandle'] = $dbhandle;
     $array['query'] = $query;
@@ -200,7 +200,7 @@ function sqlite_query($dbhandle, $query)
     return $result;
 }
 
-function sqlite_fetch_array(&$result)
+function sqlite_fetch_array(SQLite3Result &$result)
 {
     #Get Columns
     $i = 0;
@@ -209,9 +209,7 @@ function sqlite_fetch_array(&$result)
         $columns[] = $result->columnName($i);
         $i++;
     }
-
-    $resx = $result->fetchArray(SQLITE3_ASSOC);
-    return $resx;
+    return $result->fetchArray(SQLITE3_ASSOC);
 }
 
 function renameForm($filename)
