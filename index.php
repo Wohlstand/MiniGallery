@@ -188,28 +188,28 @@ function utf2fs($fname)
 
 function sqlite_open($location)
 {
-    $handle = new SQLite3($location);
+    $handle = new PDO("sqlite:" . $location);
     return $handle;
 }
 
-function sqlite_query(SQLite3 $dbhandle, $query)
+function sqlite_query(PDO $dbhandle, $query)
 {
-    $array['dbhandle'] = $dbhandle;
-    $array['query'] = $query;
-    $result = $dbhandle->query($query);
-    return $result;
+    $stmt = null;
+    try
+    {
+        $stmt = $dbhandle->prepare($query);
+        $stmt->execute();
+    }
+    catch (PDOExecption $e)
+    {
+        echo $e->getMessage();
+    }
+    return $stmt;
 }
 
-function sqlite_fetch_array(SQLite3Result &$result)
+function sqlite_fetch_array(PDOStatement &$result)
 {
-    #Get Columns
-    $i = 0;
-    while($result->columnName($i))
-    {
-        $columns[] = $result->columnName($i);
-        $i++;
-    }
-    return $result->fetchArray(SQLITE3_ASSOC);
+    return $result->fetch(PDO::FETCH_ASSOC);
 }
 
 function renameForm($filename)
