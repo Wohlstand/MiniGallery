@@ -225,12 +225,73 @@ function renameForm($filename)
 
 function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100, $target_height = 100)
 {
-    if(!file_exists($src)) return false;
-    $size = getimagesize($src);
-    if($size === false) return false;
-    $format = strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
-    $icfunc = "imagecreatefrom" . $format;
-    if(!function_exists($icfunc)) return false;
+    if(!file_exists($src))
+        return false;
+
+
+    $allowedTypes = array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF);
+    $format = exif_imagetype($src);
+
+    if(!in_array($format, $allowedTypes))
+        return false;
+
+    switch($format)
+    {
+    case IMAGETYPE_PNG:
+        $icfunc = "imagecreatefrompng";
+        break;
+    case IMAGETYPE_JPEG:
+        $icfunc = "imagecreatefromjpeg";
+        break;
+    case IMAGETYPE_GIF:
+        $icfunc = "imagecreatefromgif";
+        break;
+    default:
+        return false;
+    }
+
+    if(!function_exists($icfunc))
+    {
+        return false;
+    }
+
+    $isrc = $icfunc($src);
+    if($format === IMAGETYPE_JPEG && function_exists("exif_read_data"))
+    {
+        $exif = @exif_read_data($src);
+        if($exif && isset($exif['Orientation']))
+        {
+            $orientation = $exif['Orientation'];
+            if($orientation != 1)
+            {
+                $deg = 0;
+                switch($orientation)
+                {
+                case 3:
+                    $deg = 180;
+                    break;
+                case 6:
+                    $deg = 270;
+                    break;
+                case 8:
+                    $deg = 90;
+                    break;
+                }
+
+                if($deg)
+                {
+                    $isrc_old = $isrc;
+                    $isrc = imagerotate($isrc, $deg, 0);
+                    imagedestroy($isrc_old);
+                }
+            }
+        }
+    }
+
+    $size = [];
+    $size[0] = imagesx($isrc);
+    $size[1] = imagesy($isrc);
+
     if(($size[0] <= 100) && ($size[1] <= 100))
     {
         $width = $size[0];
@@ -239,6 +300,7 @@ function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100, $targe
     $height = ($width * $size[1]) / $size[0];
     $x_ratio = $width / $size[0];
     $y_ratio = $height / $size[1];
+
     if($height > $target_height)
     {
         $height = $target_height;
@@ -246,13 +308,14 @@ function img_resize($src, $dest, $width, $rgb = 0xFFFFFF, $quality = 100, $targe
         $x_ratio = $width / $size[0];
         $y_ratio = $height / $size[1];
     }
+
     $ratio = min($x_ratio, $y_ratio);
     $use_x_ratio = ($x_ratio == $ratio);
     $new_width = $use_x_ratio ? $width : floor($size[0] * $ratio);
     $new_height = !$use_x_ratio ? $height : floor($size[1] * $ratio);
     $new_left = $use_x_ratio ? 0 : floor(($width - $new_width) / 2);
     $new_top = !$use_x_ratio ? 0 : floor(($height - $new_height) / 2);
-    $isrc = $icfunc($src);
+
     $idest = imagecreatetruecolor($width, $height);
     imagefill($idest, 0, 0, $rgb);
     imagecopyresampled($idest, $isrc, $new_left, $new_top, 0, 0,
